@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { filter } from 'lodash';
 import { sentenceCase } from 'change-case';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 // @mui
 import {
@@ -32,6 +32,7 @@ import Scrollbar from '../components/scrollbar';
 import { UserListHead, UserListToolbar } from '../sections/@dashboard/user';
 // mock
 import USERLIST from '../_mock/user';
+import { AuthContext } from '../context/authContext';
 
 // ----------------------------------------------------------------------
 
@@ -40,8 +41,7 @@ const TABLE_HEAD = [
   { id: 'description', label: 'Тайлбар', alignRight: false },
   { id: 'categoryImg', label: 'Зураг', alignRight: false },
   { id: 'catgegoryRating', label: 'Үнэлгээ', alignRight: false },
-  { id: 'role', label: 'Role', alignRight: false },
-  { id: '' },
+  { id: '', label: 'Үйлдлүүд', alignRight: true },
 ];
 
 // ----------------------------------------------------------------------
@@ -75,8 +75,11 @@ function applySortFilter(array, comparator, query) {
   return stabilizedThis.map((el) => el[0]);
 }
 
-export default function UserPage() {
-  const [categories, setCategory] = useState([]);
+export default function CategoryPage() {
+  const { categories, setCategories } = useContext(AuthContext);
+
+  const [selectedCategory, setSelectedCategory] = useState([]);
+  const [render, setRender] = useState(false);
 
   const [open, setOpen] = useState(null);
 
@@ -93,6 +96,8 @@ export default function UserPage() {
   const [rowsPerPage, setRowsPerPage] = useState(2);
 
   const [newCategory, setNewCategory] = useState();
+
+  const [trash, setTrash] = useState();
 
   const handleClose = () => {
     setOpen(false);
@@ -120,7 +125,13 @@ export default function UserPage() {
     }
     setSelected([]);
   };
-
+  // const [editCategory, setEditCategory] = useState({});
+  // const editCat = (e) => {
+  //   console.log(e.target.value);
+  //   const editObj = {};
+  //   editObj[e.target.name] = e.target.value;
+  //   setEditCategory({ ...editCategory, ...editObj });
+  // };
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected = [];
@@ -163,20 +174,37 @@ export default function UserPage() {
       .get('http://localhost:8000/categories')
       .then((res) => {
         console.log('CAT IRLEE', res.data.categories);
-        setCategory(res.data.categories);
-        setFilteredCategory(res.data.categories);
+        setCategories(res.data.categories);
       })
       .catch((err) => {
         console.log('Err', err);
       });
-  }, []);
+  }, [render]);
+
+  const deleteItem = async (id) => {
+    try {
+      const res = await axios.delete(`http://localhost:8000/categories/${id}`);
+      console.log(res);
+      setTrash(true);
+    } catch (err) {
+      console.log('ERROR', err);
+    }
+  };
 
   return (
     <>
       <Helmet>
         <title> Azure Категори </title>
       </Helmet>
-      <CategoryModal open={open} handleClose={handleClose} newCategory={newCategory} />
+      <CategoryModal
+        open={open}
+        handleClose={handleClose}
+        newCategory={newCategory}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        render={render}
+        setRender={setRender}
+      />
       <Container>
         <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
           <Typography variant="h4" gutterBottom>
@@ -193,6 +221,7 @@ export default function UserPage() {
             Шинэ Категори Үүсгэх
           </Button>
         </Stack>
+        {console.log(categories)}
         {!categories.length && <h4>Хоосон байна</h4>}
         {categories.length > 0 && (
           <Card>
@@ -210,12 +239,11 @@ export default function UserPage() {
                     onRequestSort={handleRequestSort}
                     onSelectAllClick={handleSelectAllClick}
                   />
-                  {/* {.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)} */}
+                  {/* {categories.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)} */}
                   <TableBody>
-                    {fileteredCategory?.map((row) => {
+                    {categories?.map((row) => {
                       const { _id, title, description, categoryImg, categoryRating } = row;
 
-                      // selected={selectedUser}
                       return (
                         <TableRow hover key={_id} tabIndex={-1} role="checkbox">
                           <TableCell padding="checkbox">
@@ -235,10 +263,7 @@ export default function UserPage() {
 
                           <TableCell align="left">url</TableCell>
 
-                          <TableCell align="left">
-                            {/* <Label color={(status === 'banned' && 'error') || 'success'}>{sentenceCase(status)}</Label> */}
-                            {categoryRating}
-                          </TableCell>
+                          <TableCell align="left">{categoryRating}</TableCell>
 
                           <TableCell align="right">
                             <IconButton
@@ -246,13 +271,18 @@ export default function UserPage() {
                               color="inherit"
                               onClick={() => {
                                 setOpen(true);
-                                setNewCategory(false);
+                                setSelectedCategory(row);
                               }}
                             >
                               <Iconify icon={'eva:edit-fill'} />
                             </IconButton>
                             <IconButton size="large" color="inherit">
-                              <Iconify icon={'eva:trash-fill'} />
+                              <Iconify
+                                icon={'eva:trash-fill'}
+                                onClick={() => {
+                                  deleteItem(_id);
+                                }}
+                              />
                             </IconButton>
                           </TableCell>
                         </TableRow>
@@ -304,35 +334,6 @@ export default function UserPage() {
           </Card>
         )}
       </Container>
-
-      {/* <Popover
-        open={Boolean(open)}
-        anchorEl={open}
-        onClose={handleCloseMenu}
-        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{
-          sx: {
-            p: 1,
-            width: 140,
-            '& .MuiMenuItem-root': {
-              px: 1,
-              typography: 'body2',
-              borderRadius: 0.75,
-            },
-          },
-        }}
-      >
-        <MenuItem>
-          <Iconify icon={'eva:edit-fill'} sx={{ mr: 2 }} onClick={() => setOpen(true)} />
-          Засах
-        </MenuItem>
-
-        <MenuItem sx={{ color: 'error.main' }}>
-          <Iconify icon={'eva:trash-2-outline'} sx={{ mr: 2 }} />
-          Устгах
-        </MenuItem>
-      </Popover> */}
     </>
   );
 }

@@ -13,12 +13,12 @@ const navConfig = [
   },
   {
     title: 'Категори',
-    path: '/dashboard/user',
+    path: '/dashboard/categories',
     icon: icon('ic_user'),
   },
   {
     title: 'Аялал',
-    path: '/dashboard/products',
+    path: '/dashboard/travels',
     icon: icon('ic_cart'),
   },
   {
