@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import { Typography, Select, InputLabel, MenuItem, CardMedia, Card, CardContent } from '@mui/material';
+import { Typography, Select, InputLabel, MenuItem } from '@mui/material';
 import Modal from '@mui/material/Modal';
 import TextField from '@mui/material/TextField';
 import { useState, useContext } from 'react';
@@ -26,23 +26,24 @@ export default function TravelModal({
   newTravel,
   selectedTravel,
   setSelectedTravel,
-  render,
-  setRender,
+  // render,
+  // setRender,
+  getTravel,
 }) {
   const { categories } = useContext(AuthContext);
   const [newTravelObj, setNewTravelObj] = useState({
     title: '',
-    description: '',
-    travelImg: 'url',
-    travelPrice: '',
-    travelDay: '',
-    travelLocation: '',
-    category: '',
+    imgUTL: 'url',
+    price: '',
+    day: '',
+    location: '',
+    viewer: '',
+    // category: '',
   });
 
   const changeHandler = (e) => {
     if (newTravel) {
-      setNewTravelObj({ ...newTravel, [e.target.name]: e.target.value });
+      setNewTravelObj({ ...newTravelObj, [e.target.name]: e.target.value });
     } else {
       setSelectedTravel({ ...selectedTravel, [e.target.name]: e.target.value });
     }
@@ -51,8 +52,9 @@ export default function TravelModal({
   const updateTravel = async () => {
     try {
       const editTravel = await axios.put(`http://localhost:8000/travels/${selectedTravel._id}`, selectedTravel);
-      setRender(!render);
+      // setRender(!render);
       handleClose();
+      getTravel();
       // setOpen(false);
     } catch (err) {
       console.log('ERROR', err);
@@ -61,11 +63,14 @@ export default function TravelModal({
 
   const addTravel = async () => {
     try {
-      const result = await axios.post(`http://localhost:8000/travels`, newTravelObj);
-      setRender(!render);
+      console.log('setted: ', newTravelObj);
+      await axios.post(`http://localhost:8000/travels`, newTravelObj);
+      console.log(newTravelObj);
+      // setRender(!render);
+      getTravel();
       handleClose();
     } catch (err) {
-      console.log('ERROR', err);
+      console.log('ERROR', err.message);
     }
   };
 
@@ -92,18 +97,12 @@ export default function TravelModal({
               name="title"
               onChange={changeHandler}
             />
-            <TextField
-              label="Тайлбар"
-              variant="outlined"
-              value={newTravel ? newTravelObj.description : selectedTravel.description}
-              name="description"
-              onChange={changeHandler}
-            />
+
             <TextField
               label="Зураг"
               variant="outlined"
-              name="categoryImg"
-              value={newTravel ? newTravelObj.travelImg : selectedTravel.travelImg}
+              name="imgUTL"
+              value={newTravel ? newTravelObj.imgUTL : selectedTravel.imgUTL}
               onChange={() => {
                 console.log('Upload Photo');
               }}
@@ -111,25 +110,32 @@ export default function TravelModal({
             <TextField
               label="Аялалын Үнэ"
               variant="outlined"
-              value={newTravel ? newTravelObj.travelPrice : selectedTravel.travelPrice}
-              name="categoryRating"
+              value={newTravel ? newTravelObj.price : selectedTravel.price}
+              name="price"
               onChange={changeHandler}
             />
             <TextField
               label="Аялалын Өдөр"
               variant="outlined"
-              value={newTravel ? newTravelObj.travelDay : selectedTravel.travelDay}
-              name="categoryRating"
+              value={newTravel ? newTravelObj.day : selectedTravel.day}
+              name="day"
               onChange={changeHandler}
             />
             <TextField
               label="Аялалын Байршил"
               variant="outlined"
-              value={newTravel ? newTravelObj.travelLocation : selectedTravel.travelLocation}
-              name="categoryRating"
+              value={newTravel ? newTravelObj.location : selectedTravel.location}
+              name="location"
               onChange={changeHandler}
             />
-            <InputLabel id="demo-simple-select-label">Категори</InputLabel>
+            <TextField
+              label="Тайлбар"
+              variant="outlined"
+              value={newTravel ? newTravelObj.viewer : selectedTravel.viewer}
+              name="viewer"
+              onChange={changeHandler}
+            />
+            {/* <InputLabel id="demo-simple-select-label">Категори</InputLabel>
             <Select
               labelId="demo-simple-select-label"
               id="demo-simple-select"
@@ -140,7 +146,7 @@ export default function TravelModal({
               {categories.map((category) => (
                 <MenuItem value={category._id}>{category.title}</MenuItem>
               ))}
-            </Select>
+            </Select> */}
             <Button
               variant="contained"
               onClick={() => {
@@ -148,6 +154,7 @@ export default function TravelModal({
                   addTravel();
                 } else {
                   updateTravel();
+                  console.log(selectedTravel._id);
                 }
               }}
             >
@@ -156,32 +163,6 @@ export default function TravelModal({
           </Box>
         </Box>
       </Modal>
-      <Box>
-        {selectedTravel.map((e) => (
-          <Box key={e}>
-            <Card sx={{ maxWidth: 330, height: 410, backgroundColor: '#FED049', color: 'black', borderRadius: '23px' }}>
-              <CardMedia sx={{ height: 220 }} image={selectedTravel.travelImg} title="аялалын тайлбар" />
-              <CardContent>
-                <Typography sx={{ color: '#1363DF' }} gutterBottom variant="h5" component="div">
-                  {selectedTravel.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedTravel.description}
-                </Typography>
-                <Typography gutterBottom variant="h5" component="div">
-                  {selectedTravel.travelPrice}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedTravel.travelDay} {'Өдөр'}
-                </Typography>
-                <Typography variant="body2" color="text.first">
-                  {selectedTravel.travelLocation}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-        ))}
-      </Box>
     </div>
   );
 }

@@ -125,13 +125,7 @@ export default function CategoryPage() {
     }
     setSelected([]);
   };
-  // const [editCategory, setEditCategory] = useState({});
-  // const editCat = (e) => {
-  //   console.log(e.target.value);
-  //   const editObj = {};
-  //   editObj[e.target.name] = e.target.value;
-  //   setEditCategory({ ...editCategory, ...editObj });
-  // };
+
   const handleClick = (event, name) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected = [];
@@ -169,8 +163,8 @@ export default function CategoryPage() {
 
   const isNotFound = !filteredUsers.length && !!filterName;
 
-  useEffect(() => {
-    axios
+  const getCategory = async () => {
+    await axios
       .get('http://localhost:8000/categories')
       .then((res) => {
         console.log('CAT IRLEE', res.data.categories);
@@ -179,6 +173,10 @@ export default function CategoryPage() {
       .catch((err) => {
         console.log('Err', err);
       });
+  };
+
+  useEffect(() => {
+    getCategory();
   }, [render]);
 
   const deleteItem = async (id) => {
@@ -281,6 +279,7 @@ export default function CategoryPage() {
                                 icon={'eva:trash-fill'}
                                 onClick={() => {
                                   deleteItem(_id);
+                                  getCategory();
                                 }}
                               />
                             </IconButton>
